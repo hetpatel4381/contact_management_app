@@ -46,14 +46,16 @@ const registerUser = asyncHandler(async (req, res) => {
 // @access public
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+
   if (!email || !password) {
     res.status(400);
-    throw new Error("All Fields are mandatory!");
+    throw new Error("All fields are mandatory!");
   }
 
   const user = await User.findOne({ email });
+
   // compare password with hashedPassword
-  if (email && (await bcrypt.compare(password, user.password))) {
+  if (user && (await bcrypt.compare(password, user.password))) {
     const accessToken = jwt.sign(
       {
         user: {
@@ -63,22 +65,20 @@ const loginUser = asyncHandler(async (req, res) => {
         },
       },
       process.env.ACCESS_TOKEN_SECRET,
-      {expiresIn: "1m"}
+      { expiresIn: "1m" }
     );
     res.status(200).json({ accessToken });
   } else {
-    res.json(401);
-    throw new Error("Email or password is not valid");
+    // Add this line
+    res.status(401).json({ error: "Email or password is not valid" });
   }
-
-  res.json({ message: "Login the user" });
 });
 
 // @desc Current user info
 // @route GET /api/users/current
 // @access private
 const currentUser = asyncHandler(async (req, res) => {
-  res.json({ message: "Current user information" });
+  res.json(req.user);
 });
 
 module.exports = { registerUser, loginUser, currentUser };
